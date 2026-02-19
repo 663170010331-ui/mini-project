@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment Variables (ห้าม Push รหัสผ่าน!)
+.env
+.env.local
+.env.production
+
+# Build outputs
+dist/
+build/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Database files
+*.sqlite
+*.db
+
+# Uploads folder (ถ้ามีรูปภาพที่ user upload)
+uploads/
+
+# Misc
+*.bak
+*.tmp
