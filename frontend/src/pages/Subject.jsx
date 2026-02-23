@@ -11,6 +11,7 @@ import {
   FileText,
   Home,
   AlertCircle,
+  Search,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "../components/header";
@@ -26,6 +27,7 @@ export default function CourseCRUD() {
   const [editingCourse, setEditingCourse] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     course_id: "",
     course_name: "",
@@ -49,6 +51,13 @@ export default function CourseCRUD() {
       setLoading(false);
     }
   };
+
+  // Filter courses based on search term
+  const filteredCourses = courses.filter(course => 
+    course.course_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.course_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    course.teacher_name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleInputChange = (e) => {
     setFormData({
@@ -207,6 +216,43 @@ export default function CourseCRUD() {
           </div>
         )}
 
+        {/* Search Bar */}
+        {courses.length > 0 && (
+          <div className="mb-6">
+            <div className="relative max-w-md">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="ค้นหารายวิชา รหัสวิชา หรือชื่ออาจารย์..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 bg-white border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all text-gray-800"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  title="ล้างการค้นหา"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+            <p className="text-sm text-gray-500 mt-2">
+              {searchTerm ? (
+                <>
+                  พบ <strong className="text-blue-600">{filteredCourses.length}</strong> รายวิชา
+                  จากการค้นหา "<strong className="text-blue-600">{searchTerm}</strong>"
+                </>
+              ) : (
+                <>
+                  แสดง <strong className="text-blue-600">{filteredCourses.length}</strong> รายวิชา
+                </>
+              )}
+            </p>
+          </div>
+        )}
+
         {/* Table */}
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
           {loading && courses.length === 0 ? (
@@ -234,7 +280,26 @@ export default function CourseCRUD() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {courses.map((course, index) => (
+                  {filteredCourses.length === 0 ? (
+                    <tr>
+                      <td colSpan="5" className="text-center py-12">
+                        <Search className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                        <p className="text-gray-500 text-lg font-medium">
+                          ไม่พบรายวิชาที่ค้นหา
+                        </p>
+                        <p className="text-gray-400 text-sm mt-2">
+                          ลองค้นหาด้วยคำอื่น หรือ
+                          <button
+                            onClick={() => setSearchTerm("")}
+                            className="text-blue-600 hover:underline ml-1"
+                          >
+                            ล้างการค้นหา
+                          </button>
+                        </p>
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredCourses.map((course, index) => (
                     <tr
                       key={course.course_id}
                       className="hover:bg-gray-50 transition-colors"
@@ -306,7 +371,8 @@ export default function CourseCRUD() {
                         </div>
                       </td>
                     </tr>
-                  ))}
+                  ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -316,11 +382,23 @@ export default function CourseCRUD() {
           {courses.length > 0 && (
             <div className="bg-gray-50 px-6 py-4 border-t border-gray-200">
               <p className="text-sm text-gray-600">
-                แสดงทั้งหมด{" "}
-                <span className="font-semibold text-blue-600">
-                  {courses.length}
-                </span>{" "}
-                รายวิชา
+                {searchTerm ? (
+                  <>
+                    พบ{" "}
+                    <span className="font-semibold text-blue-600">
+                      {filteredCourses.length}
+                    </span>{" "}
+                    รายวิชา จากการค้นหา (ทั้งหมด {courses.length} รายวิชา)
+                  </>
+                ) : (
+                  <>
+                    แสดงทั้งหมด{" "}
+                    <span className="font-semibold text-blue-600">
+                      {courses.length}
+                    </span>{" "}
+                    รายวิชา
+                  </>
+                )}
               </p>
             </div>
           )}

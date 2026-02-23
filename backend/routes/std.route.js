@@ -230,18 +230,78 @@ stdRoute.post("/check-class", upload.single("leavDoc"), async (req, res) => {
     const { status, classId, stdId } = req.body;
     const filePath = req.file ? req.file.path : null;
 
-    const query = `
-        INSERT INTO attendance
-        (course_id, student_id, checkin_time, status, leave_file)
-        VALUES ($1, $2, $3, $4, $5)
-      `;
+    // ตรวจสอบว่ามีข้อมูลครบหรือไม่
+    if (!status || !classId || !stdId) {
+      return res.status(400).json({ 
+        err: "กรุณากรอกข้อมูลให้ครบถ้วน" 
+      });
+    }
 
-    await pool.query(query, [classId, stdId, new Date(), status, filePath]);
+    // 1. ตรวจสอบว่าเช็คชื่อไปแล้วหรือยัง (วันนี้)
+    const checkDuplicateQuery = `
+      SELECT * FROM attendance 
+      WHERE student_id = $1 
+        AND course_id = $2 
+        AND DATE(checkin_time) = CURRENT_DATE
+    `;
+    const duplicateResult = await pool.query(checkDuplicateQuery, [stdId, classId]);
+    
+    if (duplicateResult.rows.length > 0) {
+      return res.status(400).json({ 
+        err: "คุณเช็คชื่อวันนี้ไปแล้ว ไม่สามารถเช็คชื่อซ้ำได้",
+        alreadyChecked: true,
+        previousStatus: duplicateResult.rows[0].status,
+        checkinTime: duplicateResult.rows[0].checkin_time
+      });
+    }
 
-    res.json({ ok: true });
+    // 2. ตรวจสอบเวลา (ถ้าต้องการจำกัดเวลาเช็คชื่อ)
+    const currentHour = new Date().getHours();
+    const currentMinute = new Date().getMinutes();
+    
+    // ตัวอย่าง: ให้เช็คชื่อได้แค่ 08:00 - 18:00
+    if (currentHour < 8 || currentHour >= 18) {
+      return res.status(400).json({ 
+        err: "ไม่อยู่ในช่วงเวลาเช็คชื่อ (08:00 - 18:00)",
+        outsideTime: true
+      });
+    }
+
+    // 3. บันทึกการเช็คชื่อ
+    const insertQuery = `
+      INSERT INTO attendance
+      (course_id, student_id, checkin_time, status, leave_file)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING *
+    `;
+
+    const result = await pool.query(insertQuery, [
+      classId, 
+      stdId, 
+      new Date(), 
+      status, 
+      filePath
+    ]);
+
+    res.status(200).json({ 
+      ok: true, 
+      message: "เช็คชื่อสำเร็จ",
+      data: result.rows[0]
+    });
+
   } catch (err) {
     console.error(err);
-    res.status(500).json({ err: "Upload failed" });
+    
+    // ตรวจสอบ error ประเภทต่างๆ
+    if (err.code === '23503') {
+      return res.status(400).json({ 
+        err: "ไม่พบข้อมูลนักศึกษาหรือรายวิชา" 
+      });
+    }
+    
+    res.status(500).json({ 
+      err: "เกิดข้อผิดพลาดในการเช็คชื่อ กรุณาลองใหม่อีกครั้ง" 
+    });
   }
 });
 

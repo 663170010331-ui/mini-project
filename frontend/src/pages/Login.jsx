@@ -101,7 +101,7 @@ export default function Login() {
         const professorData = await professorRes.json();
         if (!professorData.err) {
           localStorage.setItem("loginToken", JSON.stringify(professorData));
-          location.href = "/crud/subject";
+          location.href = "/teacher-dashboard"; // เปลี่ยนจาก /crud/subject
           return;
         }
       }
@@ -110,7 +110,13 @@ export default function Login() {
       setError("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง");
     } catch (error) {
       console.error(error);
-      setError("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง");
+      
+      // ตรวจสอบว่าเป็น Network Error หรือไม่
+      if (error.message === 'Failed to fetch' || !navigator.onLine) {
+        setError("ไม่สามารถเชื่อมต่ออินเทอร์เน็ตได้ กรุณาตรวจสอบการเชื่อมต่อของคุณ");
+      } else {
+        setError("เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง");
+      }
     } finally {
       setIsLoading(false);
     }

@@ -27,22 +27,103 @@ const CheckClassRow = ({ data, classId, fetch }) => {
         classId,
         stdId,
       });
-      if (res.status === 200) {
-        Swal.fire({
-          title: "เช็คชื่อแล้ว",
+      
+      if (res.status === 200 && res.data.ok) {
+        await Swal.fire({
+          title: "เช็คชื่อสำเร็จ",
           text: `บันทึก ${status} สำเร็จ`,
           icon: "success",
           confirmButtonColor: "#4F46E5",
         });
+        
+        // Reload page เพื่อแสดงข้อมูลใหม่
+        if (fetch) {
+          fetch();
+        } else {
+          window.location.reload();
+        }
       }
     } catch (error) {
       console.error(error);
-      Swal.fire({
-        title: "เกิดข้อผิดพลาด",
-        text: "ไม่สามารถบันทึกข้อมูลได้",
-        icon: "error",
-        confirmButtonColor: "#DC2626",
-      });
+      
+      // ตรวจสอบประเภทของ Error
+      if (!error.response) {
+        // Network Error - ไม่มีอินเทอร์เน็ต
+        Swal.fire({
+          title: "ไม่มีการเชื่อมต่ออินเทอร์เน็ต",
+          html: `
+            <div style="text-align: left;">
+              <p>😕 กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตของคุณ</p>
+              <ul style="margin-top: 10px;">
+                <li>✓ ตรวจสอบ Wi-Fi หรือ Mobile Data</li>
+                <li>✓ ลองโหลดหน้าเว็บอื่นดู</li>
+                <li>✓ ลองใหม่อีกครั้ง</li>
+              </ul>
+            </div>
+          `,
+          icon: "error",
+          confirmButtonText: "ตกลง",
+          confirmButtonColor: "#DC2626",
+        });
+      } else if (error.response?.status === 400) {
+        // Bad Request - มี error message จาก backend
+        const errorData = error.response.data;
+        
+        if (errorData.alreadyChecked) {
+          // เช็คชื่อซ้ำ
+          const checkinTime = new Date(errorData.checkinTime).toLocaleString('th-TH');
+          Swal.fire({
+            title: "เช็คชื่อไปแล้ว",
+            html: `
+              <div style="text-align: left;">
+                <p><strong>คุณเช็คชื่อวันนี้ไปแล้ว</strong></p>
+                <p style="margin-top: 10px;">📋 สถานะ: <strong>${errorData.previousStatus}</strong></p>
+                <p>🕐 เวลา: <strong>${checkinTime}</strong></p>
+                <p style="margin-top: 10px; color: #DC2626;">⚠️ ไม่สามารถเช็คชื่อซ้ำได้</p>
+              </div>
+            `,
+            icon: "warning",
+            confirmButtonColor: "#F59E0B",
+          });
+        } else if (errorData.outsideTime) {
+          // เกินเวลา
+          Swal.fire({
+            title: "ไม่อยู่ในช่วงเวลาเช็คชื่อ",
+            html: `
+              <div style="text-align: left;">
+                <p>⏰ ช่วงเวลาเช็คชื่อ: <strong>08:00 - 18:00</strong></p>
+                <p style="margin-top: 10px; color: #DC2626;">กรุณาเช็คชื่อในช่วงเวลาที่กำหนด</p>
+              </div>
+            `,
+            icon: "error",
+            confirmButtonColor: "#DC2626",
+          });
+        } else {
+          // Error อื่นๆ จาก backend
+          Swal.fire({
+            title: "เกิดข้อผิดพลาด",
+            text: errorData.err || "ไม่สามารถบันทึกข้อมูลได้",
+            icon: "error",
+            confirmButtonColor: "#DC2626",
+          });
+        }
+      } else if (error.response?.status === 500) {
+        // Server Error
+        Swal.fire({
+          title: "เซิร์ฟเวอร์ขัดข้อง",
+          text: "กรุณาลองใหม่อีกครั้งในภายหลัง หรือติดต่อผู้ดูแลระบบ",
+          icon: "error",
+          confirmButtonColor: "#DC2626",
+        });
+      } else {
+        // Error อื่นๆ
+        Swal.fire({
+          title: "เกิดข้อผิดพลาด",
+          text: error.response?.data?.err || "ไม่สามารถบันทึกข้อมูลได้ กรุณาลองใหม่อีกครั้ง",
+          icon: "error",
+          confirmButtonColor: "#DC2626",
+        });
+      }
     } finally {
       setLoad(false);
     }

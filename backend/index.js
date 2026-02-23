@@ -23,6 +23,8 @@ app.get("/health", async (req, res) => {
   res.json({ status: "OK" });
 });
 
-app.listen(5000, () => {
-  console.log("Server start at port : 5000");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server start at port : ${PORT}`);
 });

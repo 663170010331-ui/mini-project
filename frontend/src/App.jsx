@@ -6,6 +6,7 @@ import Register from "./pages/Register";
 import Subject from "./pages/Subject";
 import Myprofile from "./pages/Myprofile";
 import TeacherProfile from "./pages/TeacherProfile";
+import TeacherDashboard from "./pages/TeacherDashboard";
 import Users from "./pages/Users";
 import CheckClass from "./pages/CheckClass";
 import StudentAttendanceDetail from "./pages/ClassDetail";
@@ -16,6 +17,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/register" element={<Register />} />
         <Route path="/crud/subject" element={<Subject />} />

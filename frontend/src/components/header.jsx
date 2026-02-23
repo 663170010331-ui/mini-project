@@ -30,7 +30,14 @@ const Header = () => {
       <div className="max-w-7xl mx-auto px-6 py-4">
         <div className="flex justify-between items-center">
           {/* Logo & Brand */}
-          <Link to={token?.role === "3" ? "/dashboard" : "/crud/subject"} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <Link 
+            to={
+              token?.role === "3" ? "/dashboard" : 
+              token?.role === "2" ? "/teacher-dashboard" : 
+              "/crud/subject"
+            } 
+            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+          >
             <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
               <GraduationCap className="w-7 h-7 text-white" />
             </div>
@@ -51,6 +58,17 @@ const Header = () => {
               <Link
                 to="/dashboard"
                 className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all font-medium"
+              >
+                <Users className="w-5 h-5" />
+                <span>หน้าหลัก</span>
+              </Link>
+            )}
+
+            {/* Teacher Menu - Dashboard */}
+            {token?.role === "2" && (
+              <Link
+                to="/teacher-dashboard"
+                className="flex items-center gap-2 px-4 py-2 text-gray-700 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all font-medium"
               >
                 <Users className="w-5 h-5" />
                 <span>หน้าหลัก</span>
