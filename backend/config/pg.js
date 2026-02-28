@@ -1,12 +1,11 @@
-import pg from "pg";
+import pg from 'pg';
 const { Pool } = pg;
 
 const pool = new Pool({
-  user: "postgres",
-  host: "localhost",
-  database: "STD_Check",
-  password: "Suriya010747",
-  port: 5432,
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false // สำคัญ! สำหรับ Supabase
+  }
 });
 
 export default pool;
